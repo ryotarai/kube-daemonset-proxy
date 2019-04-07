@@ -6,6 +6,11 @@ HTTP reverse proxy to Daemonset Pods
 
 ![](https://github.com/ryotarai/kube-daemonset-proxy/raw/master/doc/images/index-page.png)
 
+## Endpoints
+
+- `/` shows an index page as above. It includes links to Pods in each nodes.
+- `/n/:nodename/...` proxies requests to a Pod in `nodename`.
+
 ## Example
 
 This example deploys kube-daemonset-proxy and Netdata on Kind cluster.
