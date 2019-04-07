@@ -2,6 +2,8 @@
 
 HTTP reverse proxy to Daemonset Pods
 
+![](https://github.com/ryotarai/kube-daemonset-proxy/raw/master/doc/images/index-page.png)
+
 ## Example
 
 This example deploys kube-daemonset-proxy and Netdata on Kind cluster.
