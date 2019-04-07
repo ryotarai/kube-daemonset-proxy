@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/ryotarai/kube-daemonset-proxy/pkg/handler"
@@ -54,13 +55,26 @@ type FlagOptions struct {
 }
 
 func parseFlags() (*FlagOptions, error) {
-	os.Getenv("")
+	defaultListenAddr := os.Getenv("KUBE_DS_PROXY_LISTEN_ADDR")
+	if defaultListenAddr == "" {
+		defaultListenAddr = ":8080"
+	}
+
+	defaultPodPort := -1
+	if s := os.Getenv("KUBE_DS_PROXY_POD_PORT"); s != "" {
+		var err error
+		defaultPodPort, err = strconv.Atoi(s)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	opt := &FlagOptions{}
-	flag.StringVar(&opt.Namespace, "namespace", "", "Namespace Pods exist in")
-	flag.StringVar(&opt.LabelSelectorRaw, "label-selector", "", `Label selector e.g. "a=b,c=d"`)
-	flag.StringVar(&opt.ListenAddr, "listen-addr", ":8080", `Address to listen on`)
-	flag.StringVar(&opt.Title, "title", "", `Title in index page`)
-	flag.IntVar(&opt.PodPort, "pod-port", -1, "Pod port")
+	flag.StringVar(&opt.Namespace, "namespace", os.Getenv("KUBE_DS_PROXY_NAMESPACE"), "Namespace Pods exist in (KUBE_DS_PROXY_NAMESPACE in env var)")
+	flag.StringVar(&opt.LabelSelectorRaw, "label-selector", os.Getenv("KUBE_DS_PROXY_LABEL_SELECTOR"), `Label selector e.g. "a=b,c=d" (KUBE_DS_PROXY_LABEL_SELECTOR in env var)`)
+	flag.StringVar(&opt.ListenAddr, "listen-addr", defaultListenAddr, `Address to listen on (KUBE_DS_PROXY_LISTEN_ADDR in env var)`)
+	flag.StringVar(&opt.Title, "title", os.Getenv("KUBE_DS_PROXY_TITLE"), `Title in index page (KUBE_DS_PROXY_TITLE in env var)`)
+	flag.IntVar(&opt.PodPort, "pod-port", defaultPodPort, "Pod port (KUBE_DS_PROXY_POD_PORT in env var)")
 	flag.Parse()
 
 	if opt.Namespace == "" {
