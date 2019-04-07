@@ -29,9 +29,9 @@ func New(options Options) (*Handler, error) {
 }
 
 type Options struct {
-	Watcher *k8s.Watcher
-	PodPort int
-	Title   string
+	Watcher     *k8s.Watcher
+	PodPortName string
+	Title       string
 }
 
 type Handler struct {
@@ -88,8 +88,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *Handler) handleIndex(c *gin.Context) {
 	pods, err := s.Watcher.Pods()
 	if err != nil {
-		log.Println(err)
-		c.Status(500)
+		handleError(c, err)
 		return
 	}
 
@@ -103,14 +102,29 @@ func (s *Handler) handleIndex(c *gin.Context) {
 	})
 }
 
+func (s *Handler) findPortInPod(pod *corev1.Pod) int32 {
+	for _, c := range pod.Spec.Containers {
+		for _, p := range c.Ports {
+			if p.Name == s.PodPortName {
+				return p.ContainerPort
+			}
+		}
+	}
+	return -1
+}
+
+func handleError(c *gin.Context, err error) {
+	log.Printf("error: %v", err)
+	c.String(500, "Internal error: %v\n", err)
+}
+
 func (s *Handler) handleNodeProxy(c *gin.Context) {
 	nodeName := c.Param("nodename")
 	path := c.Param("path")
 
 	pods, err := s.Watcher.Pods()
 	if err != nil {
-		log.Printf("error: %v", err)
-		c.Status(500)
+		handleError(c, err)
 		return
 	}
 
@@ -125,9 +139,15 @@ func (s *Handler) handleNodeProxy(c *gin.Context) {
 		return
 	}
 
+	port := s.findPortInPod(pod)
+	if port < 0 {
+		handleError(c, err)
+		return
+	}
+
 	director := func(req *http.Request) {
 		req.URL.Scheme = "http"
-		req.URL.Host = fmt.Sprintf("%s:%d", pod.Status.PodIP, s.PodPort)
+		req.URL.Host = fmt.Sprintf("%s:%d", pod.Status.PodIP, port)
 		req.URL.Path = path
 		if _, ok := req.Header["User-Agent"]; !ok {
 			// explicitly disable User-Agent so it's not set to default value

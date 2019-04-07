@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/ryotarai/kube-daemonset-proxy/pkg/handler"
@@ -32,9 +31,9 @@ func main() {
 	}
 
 	s, err := handler.New(handler.Options{
-		Watcher: watcher,
-		PodPort: options.PodPort,
-		Title:   options.Title,
+		Watcher:     watcher,
+		PodPortName: options.PodPortName,
+		Title:       options.Title,
 	})
 	if err != nil {
 		log.Fatalf("failed to create HTTP handler: %v", err)
@@ -51,7 +50,7 @@ type FlagOptions struct {
 	ListenAddr       string
 	Title            string
 	LabelSelector    map[string]string
-	PodPort          int
+	PodPortName      string
 }
 
 func parseFlags() (*FlagOptions, error) {
@@ -60,28 +59,19 @@ func parseFlags() (*FlagOptions, error) {
 		defaultListenAddr = ":8080"
 	}
 
-	defaultPodPort := -1
-	if s := os.Getenv("KUBE_DS_PROXY_POD_PORT"); s != "" {
-		var err error
-		defaultPodPort, err = strconv.Atoi(s)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	opt := &FlagOptions{}
 	flag.StringVar(&opt.Namespace, "namespace", os.Getenv("KUBE_DS_PROXY_NAMESPACE"), "Namespace Pods exist in (KUBE_DS_PROXY_NAMESPACE in env var)")
 	flag.StringVar(&opt.LabelSelectorRaw, "label-selector", os.Getenv("KUBE_DS_PROXY_LABEL_SELECTOR"), `Label selector e.g. "a=b,c=d" (KUBE_DS_PROXY_LABEL_SELECTOR in env var)`)
 	flag.StringVar(&opt.ListenAddr, "listen-addr", defaultListenAddr, `Address to listen on (KUBE_DS_PROXY_LISTEN_ADDR in env var)`)
 	flag.StringVar(&opt.Title, "title", os.Getenv("KUBE_DS_PROXY_TITLE"), `Title in index page (KUBE_DS_PROXY_TITLE in env var)`)
-	flag.IntVar(&opt.PodPort, "pod-port", defaultPodPort, "Pod port (KUBE_DS_PROXY_POD_PORT in env var)")
+	flag.StringVar(&opt.PodPortName, "pod-port-name", os.Getenv("KUBE_DS_PROXY_POD_PORT_NAME"), "Name of Pod port (KUBE_DS_PROXY_POD_PORT_NAME in env var)")
 	flag.Parse()
 
 	if opt.Namespace == "" {
 		return nil, fmt.Errorf("-namespace is not set")
 	}
-	if opt.PodPort == -1 {
-		return nil, fmt.Errorf("-pod-port is not set")
+	if opt.PodPortName == "" {
+		return nil, fmt.Errorf("-pod-port-name is not set")
 	}
 
 	s := map[string]string{}
