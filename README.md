@@ -1,5 +1,7 @@
 # kube-daemonset-proxy
 
+[![Docker Repository on Quay](https://quay.io/repository/ryotarai/kube-daemonset-proxy/status "Docker Repository on Quay")](https://quay.io/repository/ryotarai/kube-daemonset-proxy)
+
 HTTP reverse proxy to Daemonset Pods
 
 ![](https://github.com/ryotarai/kube-daemonset-proxy/raw/master/doc/images/index-page.png)
@@ -17,4 +19,4 @@ $ kubectl port-forward -n kube-daemonset-proxy service/kube-daemonset-proxy :80
 Forwarding from 127.0.0.1:xxxxx -> 8080
 ```
 
-Then, visit `http://127.0.0.1:xxxxx` in a browser and you can see an index page as follows:
+Then, visit `http://127.0.0.1:xxxxx` in a browser.
