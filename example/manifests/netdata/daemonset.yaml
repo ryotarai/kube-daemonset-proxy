@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  namespace: netdata
+  name: netdata
+  labels:
+    app: netdata
+spec:
+  selector:
+    matchLabels:
+      app: netdata
+  template:
+    metadata:
+      labels:
+        app: netdata
+    spec:
+      restartPolicy: Always
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      containers:
+        - name: netdata
+          image: netdata/netdata:v1.13.0
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh","-c","killall netdata; while killall -0 netdata; do sleep 1; done"]
+          volumeMounts:
+            - name: proc
+              readOnly: true
+              mountPath: /host/proc
+            - name: run
+              mountPath: /var/run/docker.sock
+            - name: sys
+              mountPath: /host/sys
+          securityContext:
+            capabilities:
+              add:
+                - SYS_PTRACE
+                - SYS_ADMIN
+      volumes:
+        - name: proc
+          hostPath:
+            path: /proc
+        - name: run
+          hostPath:
+            path: /var/run/docker.sock
+        - name: sys
+          hostPath:
+            path: /sys
+      dnsPolicy: ClusterFirstWithHostNet

@@ -1,0 +1,21 @@
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kube-daemonset-proxy
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kube-daemonset-proxy
+subjects:
+- kind: ServiceAccount
+  name: kube-daemonset-proxy
+  namespace: kube-daemonset-proxy
+roleRef:
+  kind: ClusterRole
+  name: kube-daemonset-proxy
+  apiGroup: rbac.authorization.k8s.io

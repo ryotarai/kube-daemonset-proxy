@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-daemonset-proxy
+  namespace: kube-daemonset-proxy
+  labels:
+    app: kube-daemonset-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kube-daemonset-proxy
+  template:
+    metadata:
+      labels:
+        app: kube-daemonset-proxy
+    spec:
+      serviceAccountName: kube-daemonset-proxy
+      containers:
+      - name: proxy
+        image: kube-daemonset-proxy
+        imagePullPolicy: Never
+        args:
+        - '-namespace=netdata'
+        - '-pod-port=19999'
+        - '-label-selector=app=netdata'
+        - '-title=Netdata'
+        ports:
+        - containerPort: 8080
