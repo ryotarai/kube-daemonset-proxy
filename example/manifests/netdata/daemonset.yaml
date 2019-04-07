@@ -18,26 +18,52 @@ spec:
       tolerations:
       - key: node-role.kubernetes.io/master
         effect: NoSchedule
+      initContainers:
+      - name: config
+        image: ubuntu:18.04
+        command: ['bash']
+        args:
+        - '-ex'
+        - '-c'
+        - |
+          cat <<EOF > /config/netdata.conf
+          [global]
+          hostname = $NODE_NAME
+          EOF
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - name: config
+          mountPath: /config
       containers:
-        - name: netdata
-          image: netdata/netdata:v1.13.0
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/bin/sh","-c","killall netdata; while killall -0 netdata; do sleep 1; done"]
-          volumeMounts:
-            - name: proc
-              readOnly: true
-              mountPath: /host/proc
-            - name: run
-              mountPath: /var/run/docker.sock
-            - name: sys
-              mountPath: /host/sys
-          securityContext:
-            capabilities:
-              add:
-                - SYS_PTRACE
-                - SYS_ADMIN
+      - name: netdata
+        image: netdata/netdata:v1.13.0
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh","-c","killall netdata; while killall -0 netdata; do sleep 1; done"]
+        volumeMounts:
+          - name: proc
+            readOnly: true
+            mountPath: /host/proc
+          - name: run
+            mountPath: /var/run/docker.sock
+          - name: sys
+            mountPath: /host/sys
+          - name: config
+            mountPath: /etc/netdata/netdata.conf
+            subPath: netdata.conf
+        securityContext:
+          capabilities:
+            add:
+              - SYS_PTRACE
+              - SYS_ADMIN
+        ports:
+        - name: http
+          containerPort: 19999
       volumes:
         - name: proc
           hostPath:
@@ -48,4 +74,6 @@ spec:
         - name: sys
           hostPath:
             path: /sys
+        - name: config
+          emptyDir: {}
       dnsPolicy: ClusterFirstWithHostNet

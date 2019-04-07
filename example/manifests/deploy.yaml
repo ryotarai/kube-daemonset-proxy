@@ -20,10 +20,16 @@ spec:
       - name: proxy
         image: kube-daemonset-proxy
         imagePullPolicy: Never
-        args:
-        - '-namespace=netdata'
-        - '-pod-port=19999'
-        - '-label-selector=app=netdata'
-        - '-title=Netdata'
+        env:
+        - name: KUBE_DS_PROXY_NAMESPACE
+          value: netdata
+        - name: KUBE_DS_PROXY_POD_PORT_NAME
+          value: http
+        - name: KUBE_DS_PROXY_LABEL_SELECTOR
+          value: app=netdata
+        - name: KUBE_DS_PROXY_TITLE
+          value: Netdata
+        - name: KUBE_DS_PROXY_LISTEN_ADDR
+          value: ':8080'
         ports:
         - containerPort: 8080
